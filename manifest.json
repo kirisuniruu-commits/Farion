@@ -1,0 +1,10 @@
+{
+  "type": "preload-native",
+  "name": "Levi Distant Horizons",
+  "author": "kirisuniruu-commits",
+  "version": "0.1.0",
+  "entry": "libdistant_horizons.so",
+  "minecraft_versions": [],
+  "overwrite_files": ["config/signatures.json"],
+  "overwrite_folders": []
+}

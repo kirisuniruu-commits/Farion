@@ -1,0 +1,9 @@
+{
+  "_comment": "Byte signatures for libminecraftpe.so, per Minecraft version. Empty = the render hooks stay off and the mod does nothing to the game. Use '?' as wildcard.",
+  "minecraft_version": "",
+  "signatures": {
+    "chunkLoaded": "",
+    "chunkUnloaded": "",
+    "renderDistanceClamp": ""
+  }
+}
