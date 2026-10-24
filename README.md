@@ -36,6 +36,4 @@ CI builds everything on every push (`.github/workflows/build.yml`). Locally:
 cmake -S . -B build/host -G Ninja && cmake --build build/host && ctest --test-dir build/host
 ```
 
-Finding the hook addresses yourself: see [docs/GHIDRA_GUIDE.md](docs/GHIDRA_GUIDE.md).
-
 Tag `vX.Y.Z` to publish a release with the `.levipack` attached.
