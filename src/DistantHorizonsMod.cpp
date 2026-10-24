@@ -139,8 +139,8 @@ public:
             .config("debugLogging", "Debug Logging",
                     pl::modmenu::ConfigType::Toggle,
                     cfg.debugLogging ? "true" : "false")
-            .config("clearCache", "Clear LOD Cache",
-                    pl::modmenu::ConfigType::Button, "")
+            .config("clearCache", "Clear LOD Cache (flip to clear)",
+                    pl::modmenu::ConfigType::Toggle, "false")
             .onConfigChanged(onConfigChanged)
             .registerModule();
     if (!ok) mSelf.getLogger().error("Mod Menu registration failed");
