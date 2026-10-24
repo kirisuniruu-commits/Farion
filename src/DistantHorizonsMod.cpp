@@ -57,6 +57,8 @@ void normalize(DhConfig &c) {
   c.cpuBudgetPercent =
       std::clamp(c.cpuBudgetPercent, dhmod::kMinCpu, dhmod::kMaxCpu);
   c.quality = qualityFromIndex(static_cast<int>(c.quality), Quality::Medium);
+  c.tilesPerSecond = std::clamp(c.tilesPerSecond, dhmod::kMinTilesPerSecond,
+                                dhmod::kMaxTilesPerSecond);
 }
 
 size_t budgetBytes(const DhConfig &c) {
@@ -95,10 +97,7 @@ public:
 
   bool enable() {
     const DhConfig cfg = snapshot();
-    // Worker + cache are only created while enabled, so a disabled mod costs
-    // nothing (no thread, no memory).
-    mCache = std::make_unique<dh::LodCache>(budgetBytes(cfg));
-    mWorker = std::make_unique<dh::ThrottledWorker>(cfg.cpuBudgetPercent, 256);
+    if (cfg.enabled) startRuntime(cfg);
 
     const bool ok =
         pl::modmenu::ModuleBuilder(kModuleId, "Farion")
@@ -127,6 +126,21 @@ public:
                     std::to_string(cfg.cpuBudgetPercent),
                     std::to_string(dhmod::kMinCpu),
                     std::to_string(dhmod::kMaxCpu))
+            .config("fogBlend", "Fog Blend", pl::modmenu::ConfigType::Toggle,
+                    cfg.fogBlend ? "true" : "false")
+            .config("tilesPerSecond", "Tiles per Second",
+                    pl::modmenu::ConfigType::SliderInt,
+                    std::to_string(cfg.tilesPerSecond),
+                    std::to_string(dhmod::kMinTilesPerSecond),
+                    std::to_string(dhmod::kMaxTilesPerSecond))
+            .config("pauseInMenus", "Pause In Menus",
+                    pl::modmenu::ConfigType::Toggle,
+                    cfg.pauseInMenus ? "true" : "false")
+            .config("debugLogging", "Debug Logging",
+                    pl::modmenu::ConfigType::Toggle,
+                    cfg.debugLogging ? "true" : "false")
+            .config("clearCache", "Clear LOD Cache",
+                    pl::modmenu::ConfigType::Button, "")
             .onConfigChanged(onConfigChanged)
             .registerModule();
     if (!ok) mSelf.getLogger().error("Mod Menu registration failed");
@@ -135,8 +149,7 @@ public:
 
   bool disable() {
     pl::modmenu::unregisterModule(kModuleId);
-    mWorker.reset();
-    mCache.reset();
+    stopRuntime();
     return true;
   }
 
@@ -148,6 +161,28 @@ public:
   }
 
 private:
+  // The cache and the worker thread exist only while the module is switched on,
+  // so turning Farion off in the menu frees its memory and stops its thread.
+  void startRuntime(const DhConfig &cfg) {
+    std::lock_guard lock(mRuntimeMutex);
+    if (mCache) return;
+    mCache = std::make_unique<dh::LodCache>(budgetBytes(cfg));
+    mWorker = std::make_unique<dh::ThrottledWorker>(cfg.cpuBudgetPercent, 256);
+    mSelf.getLogger().info("Farion runtime started");
+  }
+
+  void stopRuntime() {
+    std::unique_ptr<dh::ThrottledWorker> worker;
+    std::unique_ptr<dh::LodCache> cache;
+    {
+      std::lock_guard lock(mRuntimeMutex);
+      worker = std::move(mWorker);
+      cache = std::move(mCache);
+    }
+    worker.reset(); // joins the thread outside the lock
+    cache.reset();
+  }
+
   DhConfig snapshot() {
     std::lock_guard lock(mMutex);
     if (!mConfigFile) return DhConfig{};
@@ -196,16 +231,29 @@ private:
   static void onToggle(std::string_view id, bool enabled) {
     if (id != kModuleId) return;
     auto &self = instance();
-    std::lock_guard lock(self.mMutex);
-    if (!self.mConfigFile) return;
-    self.mConfigFile->value().enabled = enabled;
-    self.mConfigFile->save();
+    DhConfig cfg;
+    {
+      std::lock_guard lock(self.mMutex);
+      if (!self.mConfigFile) return;
+      self.mConfigFile->value().enabled = enabled;
+      self.mConfigFile->save();
+      cfg = self.mConfigFile->value();
+    }
+    // Takes effect immediately, no restart: off frees the thread and memory.
+    if (enabled) self.startRuntime(cfg);
+    else self.stopRuntime();
+    self.mSelf.getLogger().info("Farion {}", enabled ? "enabled" : "disabled");
   }
 
   static void onConfigChanged(std::string_view id, std::string_view key,
                               std::string_view value) {
     if (id != kModuleId) return;
     auto &self = instance();
+    if (key == "clearCache") {
+      std::lock_guard lock(self.mRuntimeMutex);
+      if (self.mCache) self.mCache->clear();
+      return;
+    }
     DhConfig cfg;
     {
       std::lock_guard lock(self.mMutex);
@@ -220,6 +268,14 @@ private:
         c.memoryBudgetMb = parseInt(value, c.memoryBudgetMb);
       else if (key == "cpuBudgetPercent")
         c.cpuBudgetPercent = parseInt(value, c.cpuBudgetPercent);
+      else if (key == "fogBlend")
+        c.fogBlend = parseBool(value, c.fogBlend);
+      else if (key == "tilesPerSecond")
+        c.tilesPerSecond = parseInt(value, c.tilesPerSecond);
+      else if (key == "pauseInMenus")
+        c.pauseInMenus = parseBool(value, c.pauseInMenus);
+      else if (key == "debugLogging")
+        c.debugLogging = parseBool(value, c.debugLogging);
       else
         return;
       normalize(c);
@@ -227,12 +283,14 @@ private:
       cfg = c;
     }
     // Apply live; no restart needed.
+    std::lock_guard lock(self.mRuntimeMutex);
     if (self.mCache) self.mCache->setBudget(budgetBytes(cfg));
     if (self.mWorker) self.mWorker->setCpuPercent(cfg.cpuBudgetPercent);
   }
 
   ll::mod::NativeMod &mSelf;
-  std::mutex mMutex;
+  std::mutex mMutex;        // guards mConfigFile
+  std::mutex mRuntimeMutex; // guards mCache / mWorker
   std::optional<pl::config::ConfigFile<DhConfig>> mConfigFile;
   std::unique_ptr<dh::LodCache> mCache;
   std::unique_ptr<dh::ThrottledWorker> mWorker;

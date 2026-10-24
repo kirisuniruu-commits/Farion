@@ -17,6 +17,10 @@ struct DhConfig {
   Quality quality = Quality::Medium;
   int memoryBudgetMb = 128;
   int cpuBudgetPercent = 10;
+  bool fogBlend = true;
+  int tilesPerSecond = 16;
+  bool pauseInMenus = true;
+  bool debugLogging = false;
 };
 
 inline constexpr int kMinDistance = 16;
@@ -25,6 +29,8 @@ inline constexpr int kMinMemoryMb = 32;
 inline constexpr int kMaxMemoryMb = 1024;
 inline constexpr int kMinCpu = 1;
 inline constexpr int kMaxCpu = 50;
+inline constexpr int kMinTilesPerSecond = 1;
+inline constexpr int kMaxTilesPerSecond = 64;
 inline constexpr std::string_view kQualityMenuOptions = "Low,Medium,High";
 
 } // namespace dhmod
@@ -56,6 +62,18 @@ template <> struct Schema<dhmod::DhConfig> {
       return {"CPU Budget (%)",
               "Max share of one core the background LOD thread may use.",
               dhmod::kMinCpu, dhmod::kMaxCpu, false};
+    if (name == "fogBlend")
+      return {"Fog Blend", "Fade distant terrain into the fog (needs render hooks).",
+              std::nullopt, std::nullopt, false};
+    if (name == "tilesPerSecond")
+      return {"Tiles per Second", "Max LOD tiles generated per second.",
+              dhmod::kMinTilesPerSecond, dhmod::kMaxTilesPerSecond, false};
+    if (name == "pauseInMenus")
+      return {"Pause In Menus", "Stop background work while a menu is open.",
+              std::nullopt, std::nullopt, false};
+    if (name == "debugLogging")
+      return {"Debug Logging", "Write extra diagnostics to the log.",
+              std::nullopt, std::nullopt, false};
     return {};
   }
 };
