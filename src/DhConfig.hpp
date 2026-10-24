@@ -32,7 +32,7 @@ inline constexpr std::string_view kQualityMenuOptions = "Low,Medium,High";
 namespace pl::config {
 
 template <> struct Schema<dhmod::DhConfig> {
-  static constexpr std::string_view title = "Levi Distant Horizons";
+  static constexpr std::string_view title = "Farion";
   static constexpr std::string_view description =
       "Level-of-detail distant terrain settings.";
 

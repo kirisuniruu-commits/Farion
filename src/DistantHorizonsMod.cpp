@@ -22,7 +22,7 @@ namespace {
 using dhmod::DhConfig;
 using dhmod::Quality;
 
-constexpr const char *kModuleId = "levi_distant_horizons.main";
+constexpr const char *kModuleId = "farion.main";
 
 int parseInt(std::string_view v, int fallback) {
   std::string s(v);
@@ -101,7 +101,7 @@ public:
     mWorker = std::make_unique<dh::ThrottledWorker>(cfg.cpuBudgetPercent, 256);
 
     const bool ok =
-        pl::modmenu::ModuleBuilder(kModuleId, "Distant Horizons")
+        pl::modmenu::ModuleBuilder(kModuleId, "Farion")
             .modId(mSelf.getId())
             .description(mHooksReady
                              ? "Distant terrain (LOD) renderer."

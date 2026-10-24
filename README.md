@@ -1,4 +1,4 @@
-# Levi Distant Horizons
+# Farion
 
 A distant-terrain (LOD) mod for [LeviLauncher](https://github.com/LiteLDev/LeviLaunchroid) on Android (arm64-v8a),
 built on the [preloader-android](https://github.com/LiteLDev/preloader-android) SDK.
@@ -25,7 +25,7 @@ completely inert: no hooks, no patches, no crash risk.
 
 ## Install
 
-Download `levi-distant-horizons.levipack` from the latest Actions run or Release and import it in LeviLauncher.
+Download `farion.levipack` from the latest Actions run or Release and import it in LeviLauncher.
 
 ## Build
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(levi_distant_horizons LANGUAGES CXX)
+project(farion LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -53,9 +53,9 @@ else()
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out/${ANDROID_ABI}")
     find_library(LL_LOG_LIB log)
 
-    add_library(distant_horizons SHARED src/DistantHorizonsMod.cpp)
-    dh_common(distant_horizons)
-    target_compile_options(distant_horizons PRIVATE
+    add_library(farion SHARED src/DistantHorizonsMod.cpp)
+    dh_common(farion)
+    target_compile_options(farion PRIVATE
         -fvisibility=hidden -fvisibility-inlines-hidden -O2)
-    target_link_libraries(distant_horizons PRIVATE preloader ${LL_LOG_LIB})
+    target_link_libraries(farion PRIVATE preloader ${LL_LOG_LIB})
 endif()
