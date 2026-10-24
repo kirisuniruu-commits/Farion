@@ -11,8 +11,9 @@ built on the [preloader-android](https://github.com/LiteLDev/preloader-android) 
 | LOD core: tiles, downsampling, byte-budgeted LRU cache, CPU-throttled worker | Working, unit tested |
 | Game render hooks (chunk load/unload, render distance) | **Off until you supply signatures** |
 
-The renderer hooks live in `libminecraftpe.so`, and their byte signatures change with every Minecraft version.
-They are read from `config/signatures.json`. While any signature is empty or does not match, the mod stays
+The renderer hooks live in `libminecraftpe.so`. Checked against a 1.26.x arm64 build: the game's own C++ symbols are
+stripped (only third-party libs such as v8/openssl are exported), so every hook needs a hand-derived byte signature that
+changes with each Minecraft version. Signatures are read from `config/signatures.json`. While any signature is empty or does not match, the mod stays
 completely inert: no hooks, no patches, no crash risk.
 
 ## Why it does not lag
