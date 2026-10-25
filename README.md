@@ -16,6 +16,17 @@ stripped (only third-party libs such as v8/openssl are exported), so every hook 
 changes with each Minecraft version. Signatures are read from `config/signatures.json`. While any signature is empty or does not match, the mod stays
 completely inert: no hooks, no patches, no crash risk.
 
+## Render distance unlock (new)
+
+Menu option **Max Render Distance (restart)**, default 32, `0` turns it off. It raises the top of the in-game
+Render Distance slider only. It does not change your current distance, so it adds no load until you move the slider
+yourself. Higher distances load more full chunks and will lag weak phones; raise it slowly.
+
+It finds the game's slider code by an instruction pattern and hooks it. If the pattern is not found (a different
+Minecraft build), nothing is hooked. If the game crashes while the hook is installing, it turns itself off and writes
+`data/rd_hook.disabled`; delete that file to try again. The technique was confirmed by studying the
+RenderDistanceChanger mod by FRUTYDIE; this is an independent implementation.
+
 ## Why it does not lag
 
 * Background work runs on one thread at the lowest OS priority.

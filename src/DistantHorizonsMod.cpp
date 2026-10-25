@@ -1,4 +1,5 @@
 #include "DhConfig.hpp"
+#include "RenderDistanceHook.hpp"
 #include "lod/LodCache.hpp"
 
 #include <algorithm>
@@ -59,6 +60,8 @@ void normalize(DhConfig &c) {
   c.quality = qualityFromIndex(static_cast<int>(c.quality), Quality::Medium);
   c.tilesPerSecond = std::clamp(c.tilesPerSecond, dhmod::kMinTilesPerSecond,
                                 dhmod::kMaxTilesPerSecond);
+  c.maxRenderDistance = std::clamp(c.maxRenderDistance, 0,
+                                   dhmod::kMaxRenderDistanceLimit);
 }
 
 size_t budgetBytes(const DhConfig &c) {
@@ -98,6 +101,7 @@ public:
   bool enable() {
     const DhConfig cfg = snapshot();
     if (cfg.enabled) startRuntime(cfg);
+    dhmod::RenderDistanceHook::instance().start(mSelf, cfg.maxRenderDistance);
 
     const bool ok =
         pl::modmenu::ModuleBuilder(kModuleId, "Farion")
@@ -139,6 +143,10 @@ public:
             .config("debugLogging", "Debug Logging",
                     pl::modmenu::ConfigType::Toggle,
                     cfg.debugLogging ? "true" : "false")
+            .config("maxRenderDistance", "Max Render Distance (restart)",
+                    pl::modmenu::ConfigType::SliderInt,
+                    std::to_string(cfg.maxRenderDistance), "0",
+                    std::to_string(dhmod::kMaxRenderDistanceLimit))
             .config("clearCache", "Clear LOD Cache (flip to clear)",
                     pl::modmenu::ConfigType::Toggle, "false")
             .onConfigChanged(onConfigChanged)
@@ -149,6 +157,7 @@ public:
 
   bool disable() {
     pl::modmenu::unregisterModule(kModuleId);
+    dhmod::RenderDistanceHook::instance().stop();
     stopRuntime();
     return true;
   }
@@ -274,6 +283,8 @@ private:
         c.tilesPerSecond = parseInt(value, c.tilesPerSecond);
       else if (key == "pauseInMenus")
         c.pauseInMenus = parseBool(value, c.pauseInMenus);
+      else if (key == "maxRenderDistance")
+        c.maxRenderDistance = parseInt(value, c.maxRenderDistance);
       else if (key == "debugLogging")
         c.debugLogging = parseBool(value, c.debugLogging);
       else

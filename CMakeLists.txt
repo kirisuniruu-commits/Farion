@@ -53,7 +53,7 @@ else()
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out/${ANDROID_ABI}")
     find_library(LL_LOG_LIB log)
 
-    add_library(farion SHARED src/DistantHorizonsMod.cpp)
+    add_library(farion SHARED src/DistantHorizonsMod.cpp src/RenderDistanceHook.cpp)
     dh_common(farion)
     target_compile_options(farion PRIVATE
         -fvisibility=hidden -fvisibility-inlines-hidden -O2)

@@ -21,6 +21,7 @@ struct DhConfig {
   int tilesPerSecond = 16;
   bool pauseInMenus = true;
   bool debugLogging = false;
+  int maxRenderDistance = 32;
 };
 
 inline constexpr int kMinDistance = 16;
@@ -31,6 +32,7 @@ inline constexpr int kMinCpu = 1;
 inline constexpr int kMaxCpu = 50;
 inline constexpr int kMinTilesPerSecond = 1;
 inline constexpr int kMaxTilesPerSecond = 64;
+inline constexpr int kMaxRenderDistanceLimit = 96;
 inline constexpr std::string_view kQualityMenuOptions = "Low,Medium,High";
 
 } // namespace dhmod
@@ -74,6 +76,12 @@ template <> struct Schema<dhmod::DhConfig> {
     if (name == "debugLogging")
       return {"Debug Logging", "Write extra diagnostics to the log.",
               std::nullopt, std::nullopt, false};
+    if (name == "maxRenderDistance")
+      return {"Max Render Distance (restart)",
+              "Raises the top of the in-game Render Distance slider. Only "
+              "unlocks the slider; 0 = off. Higher distances load more chunks "
+              "and can lag weak phones.",
+              0, dhmod::kMaxRenderDistanceLimit, false};
     return {};
   }
 };
