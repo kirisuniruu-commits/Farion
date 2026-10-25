@@ -25,8 +25,11 @@ class RenderDistanceHook {
 public:
   static RenderDistanceHook &instance();
 
-  // maxDistance <= 0 means "off". Safe to call again after stop().
-  void start(ll::mod::NativeMod &mod, int maxDistance);
+  // Sets the slider maximum; <= 0 means "off" (the hook, if installed, just
+  // passes the game's own values through). The hook is installed the first
+  // time a value > 0 is set. Takes effect the next time the game builds the
+  // slider, which is normally at launch.
+  void setMax(ll::mod::NativeMod &mod, int maxDistance);
   void stop();
 };
 

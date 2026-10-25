@@ -24,6 +24,7 @@ using dhmod::DhConfig;
 using dhmod::Quality;
 
 constexpr const char *kModuleId = "farion.main";
+constexpr const char *kRdModuleId = "farion.renderdistance";
 
 int parseInt(std::string_view v, int fallback) {
   std::string s(v);
@@ -101,7 +102,7 @@ public:
   bool enable() {
     const DhConfig cfg = snapshot();
     if (cfg.enabled) startRuntime(cfg);
-    dhmod::RenderDistanceHook::instance().start(mSelf, cfg.maxRenderDistance);
+    applyRenderDistance(cfg);
 
     const bool ok =
         pl::modmenu::ModuleBuilder(kModuleId, "Farion")
@@ -143,20 +144,34 @@ public:
             .config("debugLogging", "Debug Logging",
                     pl::modmenu::ConfigType::Toggle,
                     cfg.debugLogging ? "true" : "false")
-            .config("maxRenderDistance", "Max Render Distance (restart)",
-                    pl::modmenu::ConfigType::SliderInt,
-                    std::to_string(cfg.maxRenderDistance), "0",
-                    std::to_string(dhmod::kMaxRenderDistanceLimit))
             .config("clearCache", "Clear LOD Cache (flip to clear)",
                     pl::modmenu::ConfigType::Toggle, "false")
             .onConfigChanged(onConfigChanged)
             .registerModule();
     if (!ok) mSelf.getLogger().error("Mod Menu registration failed");
-    return ok;
+
+    // Separate module so it can be switched on or off on its own.
+    const bool rdOk =
+        pl::modmenu::ModuleBuilder(kRdModuleId, "Render Distance Changer")
+            .modId(mSelf.getId())
+            .description("Raises the top of the Render Distance slider. Takes "
+                         "effect after a game restart. Higher distances can "
+                         "lag weak phones.")
+            .defaultEnabled(cfg.renderDistanceEnabled)
+            .onToggle(onToggle)
+            .config("maxRenderDistance", "Max Render Distance",
+                    pl::modmenu::ConfigType::SliderInt,
+                    std::to_string(cfg.maxRenderDistance), "1",
+                    std::to_string(dhmod::kMaxRenderDistanceLimit))
+            .onConfigChanged(onConfigChanged)
+            .registerModule();
+    if (!rdOk) mSelf.getLogger().error("Render Distance module registration failed");
+    return ok && rdOk;
   }
 
   bool disable() {
     pl::modmenu::unregisterModule(kModuleId);
+    pl::modmenu::unregisterModule(kRdModuleId);
     dhmod::RenderDistanceHook::instance().stop();
     stopRuntime();
     return true;
@@ -170,6 +185,11 @@ public:
   }
 
 private:
+  void applyRenderDistance(const DhConfig &cfg) {
+    dhmod::RenderDistanceHook::instance().setMax(
+        mSelf, cfg.renderDistanceEnabled ? cfg.maxRenderDistance : 0);
+  }
+
   // The cache and the worker thread exist only while the module is switched on,
   // so turning Farion off in the menu frees its memory and stops its thread.
   void startRuntime(const DhConfig &cfg) {
@@ -238,8 +258,22 @@ private:
   }
 
   static void onToggle(std::string_view id, bool enabled) {
-    if (id != kModuleId) return;
     auto &self = instance();
+    if (id == kRdModuleId) {
+      DhConfig cfg;
+      {
+        std::lock_guard lock(self.mMutex);
+        if (!self.mConfigFile) return;
+        self.mConfigFile->value().renderDistanceEnabled = enabled;
+        self.mConfigFile->save();
+        cfg = self.mConfigFile->value();
+      }
+      self.applyRenderDistance(cfg);
+      self.mSelf.getLogger().info("Render Distance Changer {}",
+                                  enabled ? "enabled" : "disabled");
+      return;
+    }
+    if (id != kModuleId) return;
     DhConfig cfg;
     {
       std::lock_guard lock(self.mMutex);
@@ -256,7 +290,7 @@ private:
 
   static void onConfigChanged(std::string_view id, std::string_view key,
                               std::string_view value) {
-    if (id != kModuleId) return;
+    if (id != kModuleId && id != kRdModuleId) return;
     auto &self = instance();
     if (key == "clearCache") {
       std::lock_guard lock(self.mRuntimeMutex);
@@ -292,6 +326,10 @@ private:
       normalize(c);
       self.mConfigFile->save();
       cfg = c;
+    }
+    if (key == "maxRenderDistance") {
+      self.applyRenderDistance(cfg);
+      return;
     }
     // Apply live; no restart needed.
     std::lock_guard lock(self.mRuntimeMutex);

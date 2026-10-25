@@ -56,13 +56,14 @@ void detour(void *self, int id, int a2, int a3, void *s4, void *s5, int def,
 
 class Impl {
 public:
-  void start(ll::mod::NativeMod &mod, int maxDistance) {
-    stop();
+  void setMax(ll::mod::NativeMod &mod, int maxDistance) {
     gMaxDistance = maxDistance;
     if (maxDistance <= 0) {
-      mod.getLogger().info("Render distance unlock is off");
+      mod.getLogger().info("Render distance changer is off");
       return;
     }
+    if (mStarted) return;
+    mStarted = true;
     mStop = false;
     mThread = std::thread([this, &mod] { run(mod); });
   }
@@ -75,6 +76,7 @@ public:
     mCv.notify_all();
     if (mThread.joinable()) mThread.join();
     mHook.reset();
+    mStarted = false;
   }
 
 private:
@@ -146,6 +148,7 @@ private:
   std::mutex mMutex;
   std::condition_variable mCv;
   bool mStop = false;
+  bool mStarted = false;
   std::thread mThread;
   pl::memory::HookHandle mHook;
 };
@@ -162,8 +165,8 @@ RenderDistanceHook &RenderDistanceHook::instance() {
   return h;
 }
 
-void RenderDistanceHook::start(ll::mod::NativeMod &mod, int maxDistance) {
-  impl().start(mod, maxDistance);
+void RenderDistanceHook::setMax(ll::mod::NativeMod &mod, int maxDistance) {
+  impl().setMax(mod, maxDistance);
 }
 
 void RenderDistanceHook::stop() { impl().stop(); }

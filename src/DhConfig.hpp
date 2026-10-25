@@ -21,6 +21,7 @@ struct DhConfig {
   int tilesPerSecond = 16;
   bool pauseInMenus = true;
   bool debugLogging = false;
+  bool renderDistanceEnabled = true;
   int maxRenderDistance = 32;
 };
 
@@ -75,6 +76,10 @@ template <> struct Schema<dhmod::DhConfig> {
               std::nullopt, std::nullopt, false};
     if (name == "debugLogging")
       return {"Debug Logging", "Write extra diagnostics to the log.",
+              std::nullopt, std::nullopt, false};
+    if (name == "renderDistanceEnabled")
+      return {"Render Distance Changer",
+              "Switch the render distance slider unlock on or off.",
               std::nullopt, std::nullopt, false};
     if (name == "maxRenderDistance")
       return {"Max Render Distance (restart)",
