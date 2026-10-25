@@ -21,7 +21,7 @@ struct DhConfig {
   int tilesPerSecond = 16;
   bool pauseInMenus = true;
   bool debugLogging = false;
-  bool renderDistanceEnabled = true;
+  bool renderDistanceEnabled = false;
   int maxRenderDistance = 32;
 };
 

@@ -18,7 +18,7 @@ completely inert: no hooks, no patches, no crash risk.
 
 ## Render distance unlock (new)
 
-Its own module, **Render Distance Changer**, with its own on/off switch and a **Max Render Distance** slider (default 32). Switch it off to get the game's normal slider back after a restart. It raises the top of the in-game
+Its own module, **Render Distance Changer** (off by default), with its own on/off switch and a **Max Render Distance** slider (default 32). Switch it off to get the game's normal slider back after a restart. It raises the top of the in-game
 Render Distance slider only. It does not change your current distance, so it adds no load until you move the slider
 yourself. Higher distances load more full chunks and will lag weak phones; raise it slowly.
 

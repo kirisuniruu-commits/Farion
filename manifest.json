@@ -2,7 +2,7 @@
   "type": "preload-native",
   "name": "Farion",
   "author": "ChrisNiruu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "entry": "libfarion.so",
   "minecraft_versions": [],
   "overwrite_files": ["config/signatures.json"],
