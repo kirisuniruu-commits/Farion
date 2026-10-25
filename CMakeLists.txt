@@ -17,8 +17,10 @@ set(FMT_TEST OFF CACHE BOOL "" FORCE)
 set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(nlohmann_json boost_pfr magic_enum fmt)
 
-# Pin to a release tag for reproducible builds.
-set(PRELOADER_ANDROID_TAG "0.2.3" CACHE STRING "LiteLDev/preloader-android tag")
+# Must match the SDK the launcher itself ships with (struct layouts are shared
+# across the mod/launcher boundary). Pinned to the commit with the Mod Menu
+# keybind/HUD-editor API; the 0.2.3 tag is older and crashes the current launcher.
+set(PRELOADER_ANDROID_TAG "5d108da350ce3e7f13f51415f81e65344ecd5d14" CACHE STRING "LiteLDev/preloader-android commit")
 FetchContent_Declare(preloader_android
     GIT_REPOSITORY https://github.com/LiteLDev/preloader-android.git
     GIT_TAG ${PRELOADER_ANDROID_TAG})
